@@ -63,7 +63,7 @@ const analysisSchema = {
 
 export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<CrystalAnalysis> => {
   // 遵循規範：直接使用 process.env.API_KEY 初始化
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const primaryWishes = profile.wishes ? profile.wishes.slice(0, 3) : [];
   const strategyInstruction = profile.isTimeUnsure ? STRATEGY_B_WISH_ORIENTED : STRATEGY_A_STRICT_BAZI;
 
