@@ -432,6 +432,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                 onSubmit={onShippingSubmit} 
                 isSubmitting={isSyncing} 
                 pricingStrategy={CUSTOM_STRATEGY}
+                initialItem={null}
             />
         ) : (
             <div 
@@ -455,9 +456,9 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                         <h4 className="text-lg font-bold text-white mb-2 font-sans">確認付款</h4>
                         <div className="mb-3">
                            <p className="text-sm text-slate-400 font-sans">總金額 <span className="text-gold-400 font-bold font-sans">${(record.shippingDetails.totalPrice).toLocaleString()}</span></p>
-                           {record.shippingDetails.discountAmount && record.shippingDetails.discountAmount > 0 && (
+                           {record.shippingDetails && 'discountAmount' in record.shippingDetails && record.shippingDetails.discountAmount && record.shippingDetails.discountAmount > 0 && (
                                <div className="inline-block mt-2 px-3 py-1 bg-green-900/20 border border-green-500/20 rounded text-xs text-green-400 font-bold">
-                                   已折抵 ${record.shippingDetails.discountAmount} (優惠碼: {record.shippingDetails.couponCode})
+                                   已折抵 ${record.shippingDetails.discountAmount} {record.shippingDetails.couponCode && `(優惠碼: ${record.shippingDetails.couponCode})`}
                                </div>
                            )}
                         </div>
