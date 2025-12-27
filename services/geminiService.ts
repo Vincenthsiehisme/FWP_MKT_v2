@@ -20,7 +20,6 @@ const STRATEGY_B_WISH_ORIENTED = `
 3. **反推喜用神**：將為願望選出的水晶五行設定為本次的喜用神。
 `;
 
-// Defines the expected response structure for the crystal analysis.
 const analysisSchema = {
   type: Type.OBJECT,
   properties: {
@@ -63,7 +62,7 @@ const analysisSchema = {
 };
 
 export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<CrystalAnalysis> => {
-  // Always initialize GoogleGenAI inside functions to ensure the latest API_KEY from the environment is used.
+  // 遵循規範：直接使用 process.env.API_KEY 初始化
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const primaryWishes = profile.wishes ? profile.wishes.slice(0, 3) : [];
   const strategyInstruction = profile.isTimeUnsure ? STRATEGY_B_WISH_ORIENTED : STRATEGY_A_STRICT_BAZI;
@@ -87,7 +86,6 @@ export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      // Simplified content string as per recommended usage.
       contents: promptText,
       config: {
         responseMimeType: "application/json",
@@ -96,7 +94,6 @@ export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<
       },
     });
 
-    // Directly access the text property of the response object.
     const analysis = JSON.parse(response.text || '{}') as CrystalAnalysis;
     return analysis;
   } catch (error) {
@@ -106,7 +103,7 @@ export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<
 };
 
 export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: CustomerProfile): Promise<string> => {
-  // Always initialize GoogleGenAI inside functions to ensure the latest API_KEY from the environment is used.
+  // 遵循規範：直接使用 process.env.API_KEY 初始化
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const crystalStr = analysis.suggestedCrystals.join(", ");
   const mainCrystal = analysis.suggestedCrystals[0];
@@ -126,12 +123,10 @@ export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-image",
-      // Simplified content string as per recommended usage for image generation with generateContent.
       contents: promptToUse,
       config: { imageConfig: { aspectRatio: "1:1" } }
     });
 
-    // Iterate through response parts to locate the inlineData image.
     for (const part of response.candidates?.[0]?.content?.parts || []) {
       if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
