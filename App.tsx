@@ -7,7 +7,8 @@ import BottomNav from './components/BottomNav';
 import CRMList from './components/CRMList';
 import ProductCheckout from './components/ProductCheckout'; 
 import ZodiacSelector from './components/ZodiacSelector';
-import { analyzeCustomerProfile } from './services/geminiService';
+import { analyzeCustomerProfile } from './services/geminiService'; // ✅ 移除 generateBraceletImage
+// Removed sendTestPing import which was causing a "no exported member" error.
 import { syncToGoogleSheet } from './services/googleSheetService';
 import { dbService } from './services/dbService';
 import { ProductEntry } from './services/productDatabase';
@@ -52,31 +53,15 @@ const App: React.FC = () => {
     dbService.getAllCustomers().then(setCustomers);
   }, []);
 
-  useEffect(() => {
-    if (loadingState === 'analyzing') {
-      const messages = [
-        "正在繪製八字命盤...",
-        "分析五行能量分佈...",
-        "推算喜用神與互補元素..."
-      ];
-      let index = 0;
-      setLoadingMessage(messages[0]);
-      
-      const interval = setInterval(() => {
-        index = (index + 1) % messages.length;
-        setLoadingMessage(messages[index]);
-      }, 2500);
-
-      return () => clearInterval(interval);
-    }
-  }, [loadingState]);
-
   const handleFormSubmit = async (profileData: Omit<CustomerProfile, 'id' | 'createdAt'>) => {
     setLoadingState('analyzing');
     setErrorMessage(null);
     const newProfile: CustomerProfile = { ...profileData, id: crypto.randomUUID(), createdAt: Date.now(), wishes: profileData.wishes || [] };
     try {
       const analysis = await analyzeCustomerProfile(newProfile);
+      // ❌ 移除：setLoadingState('generating_image');
+      // ❌ 移除：const imageUrl = await generateBraceletImage(analysis, newProfile);
+      // ✅ 直接設定空字串，不生成圖片
       const fullRecord: CustomerRecord = { ...newProfile, analysis, generatedImageUrl: "" };
       await dbService.addCustomer(fullRecord);
       setCustomers(await dbService.getAllCustomers());
@@ -139,10 +124,11 @@ const App: React.FC = () => {
       </header>
 
       <main className="container mx-auto px-4 relative z-10 flex-grow w-full max-w-7xl pb-24">
+        {/* ✅ 修改：只在 analyzing 狀態顯示 Loading */}
         {loadingState === 'analyzing' && (
           <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-xl">
              <div className="w-16 h-16 border-t-2 border-mystic-400 rounded-full animate-spin mb-6"></div>
-             <h3 className="text-xl font-bold text-white animate-pulse">{loadingMessage || '正在為您凝聚能量...'}</h3>
+             <h3 className="text-xl font-bold text-white animate-pulse">正在為您凝聚能量...</h3>
           </div>
         )}
 
