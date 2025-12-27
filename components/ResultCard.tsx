@@ -2,7 +2,6 @@ import React, { useRef, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CustomerRecord, ShippingDetails, PricingStrategy } from '../types';
 import ShippingForm from './ShippingForm';
-import ElementIcon from './ElementIcon'; // ✅ 新增 import
 
 // Global declaration for Chart.js loaded via CDN
 declare var Chart: any;
@@ -241,7 +240,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
       {/* PAYMENT MODAL (PORTAL) */}
       {showPaymentModal && createPortal(paymentModalContent, document.body)}
 
-      {/* ✅ 主卡片 - 修正後的單欄版面 */}
+      {/* ✅ 主卡片 - 依截圖優化的版面 */}
       <div className="bg-slate-800/40 backdrop-blur-2xl rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] mb-8">
         
         {/* 內容區 */}
@@ -316,22 +315,14 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                 </div>
             </div>
 
-            {/* 2. ✅ 能量視覺中心 - 三欄式（新設計） */}
+            {/* 2. ✅ 能量視覺中心 - 二欄整合版（依截圖設計） */}
             <div className="bg-slate-900/60 rounded-3xl border border-white/10 p-6 md:p-8 relative overflow-hidden shadow-lg">
                 <div className="absolute top-0 right-0 w-40 h-40 bg-mystic-500/10 blur-3xl rounded-full pointer-events-none"></div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-center relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative z-10">
                   
-                  {/* 左：五行圖騰（新增） */}
-                  <div className="flex justify-center md:justify-start">
-                    <ElementIcon 
-                      element={record.analysis.luckyElement.charAt(0) as '金' | '木' | '水' | '火' | '土'} 
-                      size={160} 
-                    />
-                  </div>
-
-                  {/* 中：雷達圖（原有） */}
-                  <div className="relative h-[240px] flex items-center justify-center flex-col">
+                  {/* 左：雷達圖 */}
+                  <div className="relative h-[280px] flex items-center justify-center flex-col">
                     <canvas ref={chartRef}></canvas>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
                        <div className="w-16 h-16 bg-mystic-500/20 blur-xl rounded-full"></div>
@@ -343,11 +334,12 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                     )}
                   </div>
 
-                  {/* 右：核心訊息 */}
+                  {/* 右：核心訊息（完整版） */}
                   {insightTarget && (
-                    <div className="flex flex-col justify-center min-h-[200px] relative md:border-l border-t md:border-t-0 border-white/5 md:pl-6 pt-6 md:pt-0">
+                    <div className="flex flex-col justify-center relative md:border-l border-t md:border-t-0 border-white/5 md:pl-8 pt-6 md:pt-0">
+                       {/* 標籤 */}
                        <div className="mb-4">
-                           <span className={`text-[10px] font-bold uppercase tracking-widest border px-2 py-0.5 rounded-full
+                           <span className={`inline-block text-[10px] font-bold uppercase tracking-widest border px-2 py-0.5 rounded-full
                                ${record.isTimeUnsure 
                                   ? 'text-gold-400 border-gold-500/20 bg-gold-900/10' 
                                   : 'text-mystic-400 border-mystic-500/20 bg-mystic-900/10'}
@@ -356,46 +348,51 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                           </span>
                        </div>
                        
-                       <div>
-                           <h4 className="text-2xl font-bold text-white mb-2 font-sans flex items-center gap-2 flex-wrap">
+                       {/* 主標題 */}
+                       <div className="mb-4">
+                           <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 font-sans">
                               {insightTarget.name}
-                              <span className="text-sm font-normal text-green-400 bg-green-900/30 px-2 py-0.5 rounded-md border border-green-500/30">
-                                {record.isTimeUnsure 
-                                    ? '您的顯化能量' 
-                                    : (insightTarget.type === 'lucky' ? '您的喜用神' : '能量需補強')
-                                }
+                           </h3>
+                           <span className="inline-block text-sm font-medium text-green-400 bg-green-900/30 px-3 py-1 rounded-md border border-green-500/30">
+                             {record.isTimeUnsure 
+                                 ? '您的顯化能量' 
+                                 : (insightTarget.type === 'lucky' ? '您的喜用神' : '能量需補強')
+                             }
+                           </span>
+                       </div>
+                       
+                       {/* 說明文字 */}
+                       <p className="text-sm text-slate-300 leading-relaxed font-sans mb-4">
+                          {record.isTimeUnsure ? (
+                            <>
+                              命盤分析顯示，<strong className="text-gold-400 mx-1">{insightTarget.name}</strong> 是您目前最需要的平衡元素。
+                            </>
+                          ) : (
+                            <>
+                              命盤分析顯示，<strong className="text-mystic-300 mx-1">{insightTarget.name}</strong> 是您目前最需要的平衡元素。
+                            </>
+                          )}
+                       </p>
+                       
+                       {/* 底部提示 */}
+                       <div className="pt-4 border-t border-white/5">
+                           <p className="text-xs text-slate-400 flex items-start gap-2">
+                              <span className="text-gold-400 mt-0.5 shrink-0">✦</span>
+                              <span>
+                                {record.isTimeUnsure ? (
+                                   <>針對您的主要願望,透過特定水晶的{insightTarget.name}行磁場，能有效增強運勢。</>
+                                ) : (
+                                   <>透過五行互補原理，此手鍊將為您注入{insightTarget.name}行能量，協助達成五行圓滿。</>
+                                )}
                               </span>
-                           </h4>
-                           
-                           <p className="text-sm text-slate-300 leading-relaxed font-sans text-justify">
-                              {record.isTimeUnsure ? (
-                                <>
-                                  為達成您的願望，<strong className="text-gold-400 mx-1">{insightTarget.name}</strong> 是您目前最強大的顯化能量。
-                                </>
-                              ) : (
-                                <>
-                                  命盤分析顯示，<strong className="text-mystic-300 mx-1">{insightTarget.name}</strong> 是您目前最需要的平衡元素。
-                                </>
-                              )}
                            </p>
-                           
-                           <div className="mt-4 pt-4 border-t border-white/5">
-                               <p className="text-xs text-slate-400 flex items-start gap-2">
-                                  <span className="text-gold-400 mt-0.5">✦</span>
-                                  {record.isTimeUnsure ? (
-                                     <span>針對您的主要願望，透過特定水晶的{insightTarget.name}行磁場，能有效增強運勢。</span>
-                                  ) : (
-                                     <span>透過五行互補原理，此手鍊將為您注入{insightTarget.name}行能量，協助達成五行圓滿。</span>
-                                  )}
-                               </p>
-                           </div>
                        </div>
                     </div>
                   )}
                 </div>
             </div>
 
-            {/* 3. 詳細分析（原有，保持不變） */}
+            {/* 3. 詳細分析 */}
             <div>
                 <button 
                   onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
@@ -428,7 +425,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
         </div>
       </div>
 
-      {/* Shipping Form Section - 保持完全不變 */}
+      {/* Shipping Form Section - 保持不變 */}
       <div ref={scrollRef}>
         {!record.shippingDetails ? (
             <ShippingForm 
