@@ -319,7 +319,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
         </div>
       </div>
 
-      {/* Shipping Form / Order Receipt Section */}
+      {/* ✅ Shipping Form / Order Receipt Section - 停用加購功能 */}
       <div ref={successRef}>
         {!record.shippingDetails ? (
             <ShippingForm 
@@ -331,7 +331,8 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                     name: '八字水晶訂製款', 
                     price: 2400, 
                     isCustom: true 
-                }} 
+                }}
+                allowAdditionalPurchase={false} // ✅ 五行客製流程關閉加購
             />
         ) : (
             <OrderReceipt record={record} onReset={onReset} />
