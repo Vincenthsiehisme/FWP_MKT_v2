@@ -13,7 +13,7 @@ const STRATEGY_A_STRICT_BAZI = `
 
 const STRATEGY_B_WISH_ORIENTED = `
 【模式 B：願望顯化導向 (時辰不詳)】
-由於時辰不確定，精確計算易失準，改採「願望顯化」策略。
+由於時辰不確定，精確計算易失準,改採「願望顯化」策略。
 1. **排盤限制**：僅參考年、月、日三柱。
 2. **決定水晶**：100% 基於用戶的【主要願望】。從資料庫中找出最能解決該願望的水晶。
 3. **反推喜用神**：將為願望選出的水晶五行設定為本次的喜用神。
@@ -61,8 +61,7 @@ const analysisSchema = {
 };
 
 export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<CrystalAnalysis> => {
-  // 修改：使用 import.meta.env 取代 process.env
-  const apiKey = (import.meta.env as any).VITE_GEMINI_API_KEY || (import.meta.env as any).VITE_API_KEY || '';
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY || '';
   const ai = new GoogleGenAI({ apiKey });
   const primaryWishes = profile.wishes ? profile.wishes.slice(0, 3) : [];
   const strategyInstruction = profile.isTimeUnsure ? STRATEGY_B_WISH_ORIENTED : STRATEGY_A_STRICT_BAZI;
@@ -103,8 +102,7 @@ export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<
 };
 
 export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: CustomerProfile): Promise<string> => {
-  // 修改：使用 import.meta.env 取代 process.env
-  const apiKey = (import.meta.env as any).VITE_GEMINI_API_KEY || (import.meta.env as any).VITE_API_KEY || '';
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY || '';
   const ai = new GoogleGenAI({ apiKey });
   const crystalStr = analysis.suggestedCrystals.join(", ");
   const mainCrystal = analysis.suggestedCrystals[0];
