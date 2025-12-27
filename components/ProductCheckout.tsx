@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { CustomerRecord, ShippingDetails, PricingStrategy } from '../types';
 import ShippingForm from './ShippingForm';
@@ -58,11 +57,13 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ record, product, onBa
                       </div>
                   </div>
 
+                  {/* ✅ 標準商品結帳 - 保持加購功能開啟 */}
                   <ShippingForm 
                       onSubmit={onShippingSubmit} 
                       isSubmitting={isSyncing} 
                       pricingStrategy={STANDARD_STRATEGY}
                       initialItem={{ productId: product.name, name: product.name, price: product.price }}
+                      allowAdditionalPurchase={true} // ✅ 標準商品保持加購功能
                   />
               </div>
           ) : (
