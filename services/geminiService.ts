@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { CustomerProfile, CrystalAnalysis } from '../types';
 import { CRYSTAL_KNOWLEDGE_BASE } from './crystalDatabase';
@@ -62,8 +61,10 @@ const analysisSchema = {
 };
 
 export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<CrystalAnalysis> => {
-  // 遵循規範：直接使用 process.env.API_KEY 初始化
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  // Use Vite's import.meta.env for environment variables
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY;
+  const ai = new GoogleGenAI({ apiKey });
+  
   const primaryWishes = profile.wishes ? profile.wishes.slice(0, 3) : [];
   const strategyInstruction = profile.isTimeUnsure ? STRATEGY_B_WISH_ORIENTED : STRATEGY_A_STRICT_BAZI;
 
@@ -103,8 +104,10 @@ export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<
 };
 
 export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: CustomerProfile): Promise<string> => {
-  // 遵循規範：直接使用 process.env.API_KEY 初始化
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Use Vite's import.meta.env for environment variables
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY;
+  const ai = new GoogleGenAI({ apiKey });
+  
   const crystalStr = analysis.suggestedCrystals.join(", ");
   const mainCrystal = analysis.suggestedCrystals[0];
   const productInfo = getProductDetails(mainCrystal);
