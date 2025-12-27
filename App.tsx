@@ -1,42 +1,23 @@
 // ========================================
-// App.tsx 需要修改的完整程式碼片段
+// App.tsx 中 useEffect 的正確完整程式碼
+// 請確保這段程式碼放在 App 組件內部
 // ========================================
 
-// -----------------------------------------
-// 修改 1: useEffect (約在第 130 行)
-// -----------------------------------------
+// 在 App 函數的開頭應該有這些 state 定義：
+const [loadingState, setLoadingState] = useState<LoadingState>('idle');
+const [loadingMessage, setLoadingMessage] = useState('');
 
-// ❌ 刪除這段
-/*
-useEffect(() => {
-  if (loadingState === 'analyzing' || loadingState === 'generating_image') {
-    const messages = [
-      "正在繪製八字命盤...",
-      "分析五行能量分佈...",
-      "推算喜用神與互補元素...",
-      "正在凝聚專屬水晶能量..."
-    ];
-    let index = 0;
-    setLoadingMessage(messages[0]);
-    
-    const interval = setInterval(() => {
-      index = (index + 1) % messages.length;
-      setLoadingMessage(messages[index]);
-    }, 2500);
+// ... 其他 state 定義 ...
 
-    return () => clearInterval(interval);
-  }
-}, [loadingState]);
-*/
-
-// ✅ 替換成這段
+// Progressive Loading Text Logic
+// 位置：應該在所有 state 定義之後，handler 函數之前
 useEffect(() => {
   if (loadingState === 'analyzing') {  // ✅ 只監聽 analyzing
     const messages = [
       "正在繪製八字命盤...",
       "分析五行能量分佈...",
       "推算喜用神與互補元素..."
-      // ❌ 移除："正在凝聚專屬水晶能量..."
+      // ❌ 已移除："正在凝聚專屬水晶能量..."
     ];
     let index = 0;
     setLoadingMessage(messages[0]);
@@ -48,80 +29,114 @@ useEffect(() => {
 
     return () => clearInterval(interval);
   }
-}, [loadingState]);
+}, [loadingState]);  // ✅ 確保有依賴項
 
 
-// -----------------------------------------
-// 修改 2: Loading Overlay (約在第 348 行)
-// -----------------------------------------
+// ========================================
+// 檢查清單：確保這些都存在於 App.tsx 中
+// ========================================
 
-// ❌ 刪除這段
-/*
-{(loadingState === 'analyzing' || loadingState === 'generating_image') && (
-  <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-xl transition-all duration-500">
-*/
+// 1. ✅ Import React 和 hooks
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 
-// ✅ 替換成這段
-{loadingState === 'analyzing' && (
-  <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-xl transition-all duration-500">
-     <div className="relative w-24 h-24 mb-8">
-      <div className="absolute inset-0 border-2 border-mystic-900/50 rounded-full scale-110"></div>
-      <div className="absolute inset-0 border-t-2 border-mystic-400 rounded-full animate-spin"></div>
-      <div className="absolute inset-2 border-2 border-slate-800 rounded-full"></div>
-    </div>
-    <h3 className="text-2xl md:text-3xl font-sans font-bold text-white animate-pulse tracking-wide text-center px-4">
-      {loadingMessage || '正在啟動能量分析...'}
-    </h3>
-    <p className="text-mystic-400/70 mt-4 text-sm font-normal tracking-wider font-sans opacity-80">
-        凝聚天地能量，探尋命理奧秘
-    </p>
-  </div>
-)}
+// 2. ✅ Import types
+import { CustomerRecord, CustomerProfile, LoadingState, ShippingDetails } from './types';
+
+// 3. ✅ 在 App 組件內定義 state
+const App: React.FC = () => {
+  // Navigation State
+  const [activeTab, setActiveTab] = useState<'shop' | 'customize' | 'mine'>('shop');
+  
+  // Loading State
+  const [loadingState, setLoadingState] = useState<LoadingState>('idle');  // ← 這行必須存在
+  const [loadingMessage, setLoadingMessage] = useState('');                // ← 這行必須存在
+  
+  // ... 其他 state ...
+  
+  // 然後才是 useEffect
+  useEffect(() => {
+    if (loadingState === 'analyzing') {
+      // ...
+    }
+  }, [loadingState]);
+  
+  // ... 其他程式碼 ...
+}
 
 
-// -----------------------------------------
-// 修改 3: handleFormSubmit (你已經改好了！)
-// -----------------------------------------
+// ========================================
+// 常見錯誤原因
+// ========================================
 
-// ✅ 你的版本已經是對的：
-const handleFormSubmit = async (profileData: Omit<CustomerProfile, 'id' | 'createdAt'>) => {
-  setLoadingState('analyzing');
-  setErrorMessage(null);
+// ❌ 錯誤 1: useEffect 放在組件外面
+import React from 'react';
 
-  const newProfile: CustomerProfile = {
-    ...profileData,
-    id: crypto.randomUUID(),
-    createdAt: Date.now(),
-    wishes: profileData.wishes || []
-  };
+useEffect(() => {  // ❌ 這是錯的！useEffect 不能在組件外
+  // ...
+});
 
-  try {
-    // 步驟 1: 分析八字
-    const analysis = await analyzeCustomerProfile(newProfile);
-    
-    // ❌ 已移除：setLoadingState('generating_image');
-    // ❌ 已移除：const imageUrl = await generateBraceletImage(analysis, newProfile);
-
-    // 步驟 2: 建立完整記錄（圖片欄位直接設為空字串）
-    const fullRecord: CustomerRecord = {
-      ...newProfile,
-      analysis,
-      generatedImageUrl: "", // ✅ 不再生成圖片
-    };
-
-    // 步驟 3: 儲存到資料庫
-    await dbService.addCustomer(fullRecord);
-    const updatedRecords = await dbService.getAllCustomers();
-    setCustomers(updatedRecords);
-    
-    // 步驟 4: 顯示結果
-    setCustomAnalysisRecord(fullRecord);
-    setLoadingState('completed');
-    setView('result');
-
-  } catch (error: any) {
-    console.error(error);
-    setErrorMessage(error.message || "發生未知錯誤");
-    setLoadingState('error');
-  }
+const App = () => {
+  // ...
 };
+
+
+// ❌ 錯誤 2: 缺少 state 定義
+const App = () => {
+  // 忘記定義這些
+  // const [loadingState, setLoadingState] = useState<LoadingState>('idle');
+  // const [loadingMessage, setLoadingMessage] = useState('');
+  
+  useEffect(() => {
+    if (loadingState === 'analyzing') {  // ❌ loadingState 未定義
+      // ...
+    }
+  }, [loadingState]);
+};
+
+
+// ❌ 錯誤 3: import 不完整
+import React from 'react';  // ❌ 缺少 useEffect
+
+const App = () => {
+  useEffect(() => {  // ❌ useEffect is not defined
+    // ...
+  });
+};
+
+
+// ✅ 正確的結構
+import React, { useState, useEffect } from 'react';  // ✅ 正確的 import
+
+const App: React.FC = () => {
+  // ✅ State 定義
+  const [loadingState, setLoadingState] = useState<LoadingState>('idle');
+  const [loadingMessage, setLoadingMessage] = useState('');
+  
+  // ✅ useEffect 在組件內部
+  useEffect(() => {
+    if (loadingState === 'analyzing') {
+      const messages = [
+        "正在繪製八字命盤...",
+        "分析五行能量分佈...",
+        "推算喜用神與互補元素..."
+      ];
+      let index = 0;
+      setLoadingMessage(messages[0]);
+      
+      const interval = setInterval(() => {
+        index = (index + 1) % messages.length;
+        setLoadingMessage(messages[index]);
+      }, 2500);
+
+      return () => clearInterval(interval);
+    }
+  }, [loadingState]);
+  
+  return (
+    <div>
+      {/* ... */}
+    </div>
+  );
+};
+
+export default App;
