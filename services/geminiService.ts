@@ -61,10 +61,9 @@ const analysisSchema = {
 };
 
 export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<CrystalAnalysis> => {
-  // Use Vite's import.meta.env for environment variables
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY;
+  // 修改：使用 import.meta.env 取代 process.env
+  const apiKey = (import.meta.env as any).VITE_GEMINI_API_KEY || (import.meta.env as any).VITE_API_KEY || '';
   const ai = new GoogleGenAI({ apiKey });
-  
   const primaryWishes = profile.wishes ? profile.wishes.slice(0, 3) : [];
   const strategyInstruction = profile.isTimeUnsure ? STRATEGY_B_WISH_ORIENTED : STRATEGY_A_STRICT_BAZI;
 
@@ -104,10 +103,9 @@ export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<
 };
 
 export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: CustomerProfile): Promise<string> => {
-  // Use Vite's import.meta.env for environment variables
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY;
+  // 修改：使用 import.meta.env 取代 process.env
+  const apiKey = (import.meta.env as any).VITE_GEMINI_API_KEY || (import.meta.env as any).VITE_API_KEY || '';
   const ai = new GoogleGenAI({ apiKey });
-  
   const crystalStr = analysis.suggestedCrystals.join(", ");
   const mainCrystal = analysis.suggestedCrystals[0];
   const productInfo = getProductDetails(mainCrystal);
