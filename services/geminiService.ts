@@ -13,7 +13,7 @@ const STRATEGY_A_STRICT_BAZI = `
 
 const STRATEGY_B_WISH_ORIENTED = `
 【模式 B：願望顯化導向 (時辰不詳)】
-由於時辰不確定，精確計算易失準,改採「願望顯化」策略。
+由於時辰不確定，精確計算易失準，改採「願望顯化」策略。
 1. **排盤限制**：僅參考年、月、日三柱。
 2. **決定水晶**：100% 基於用戶的【主要願望】。從資料庫中找出最能解決該願望的水晶。
 3. **反推喜用神**：將為願望選出的水晶五行設定為本次的喜用神。
@@ -101,14 +101,38 @@ export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<
   }
 };
 
+/**
+ * 圖片生成功能已停用
+ * 改為從商品資料庫直接取得圖片，若無則返回空字串
+ */
 export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: CustomerProfile): Promise<string> => {
+  console.log("[圖片生成] 功能已停用，從商品資料庫取得圖片");
+  
+  // 檢查分析結果是否有效
+  if (!analysis || !analysis.suggestedCrystals || analysis.suggestedCrystals.length === 0) {
+    console.warn("[圖片生成] 無效的分析結果");
+    return "";
+  }
+
+  const mainCrystal = analysis.suggestedCrystals[0];
+  
+  // 從商品資料庫取得圖片
+  const productInfo = getProductDetails(mainCrystal);
+
+  if (productInfo && productInfo.imageUrl) {
+    console.log(`[商品資料庫] 找到 ${mainCrystal} 的圖片`);
+    return productInfo.imageUrl;
+  }
+
+  console.warn(`[商品資料庫] 未找到 ${mainCrystal} 的圖片，返回空字串`);
+  return "";
+
+  /* 
+  ===== 以下是原本的 AI 圖片生成代碼（已停用，保留以便未來恢復） =====
+  
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY || '';
   const ai = new GoogleGenAI({ apiKey });
   const crystalStr = analysis.suggestedCrystals.join(", ");
-  const mainCrystal = analysis.suggestedCrystals[0];
-  const productInfo = getProductDetails(mainCrystal);
-
-  if (productInfo && productInfo.imageUrl) return productInfo.imageUrl;
 
   const promptToUse = productInfo?.fixedPrompt || `
     Macro product photography of a high-end crystal bracelet.
@@ -134,4 +158,5 @@ export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: 
     console.error("Image Gen Error:", error);
     return ""; 
   }
+  */
 };
