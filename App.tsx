@@ -1,172 +1,127 @@
+// ========================================
+// App.tsx 需要修改的完整程式碼片段
+// ========================================
 
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { CustomerRecord, CustomerProfile, LoadingState, ShippingDetails } from './types';
-import CustomerForm from './components/CustomerForm';
-import ResultCard from './components/ResultCard';
-import Marketplace from './components/Marketplace';
-import BottomNav from './components/BottomNav';
-import CRMList from './components/CRMList';
-import ProductCheckout from './components/ProductCheckout'; 
-import ZodiacSelector from './components/ZodiacSelector';
-import { analyzeCustomerProfile, generateBraceletImage } from './services/geminiService';
-// Removed sendTestPing import which was causing a "no exported member" error.
-import { syncToGoogleSheet } from './services/googleSheetService';
-import { dbService } from './services/dbService';
-import { ProductEntry } from './services/productDatabase';
-import { COUPON_CONFIG } from './config/coupons';
+// -----------------------------------------
+// 修改 1: useEffect (約在第 130 行)
+// -----------------------------------------
 
-const HARDCODED_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymE_hk3XoyMK45dluWCASGzVmwNU_TSj2wgmNVNkSseqRW7bEOCRzwZSFe8KfoNEsDcg/exec"; 
+// ❌ 刪除這段
+/*
+useEffect(() => {
+  if (loadingState === 'analyzing' || loadingState === 'generating_image') {
+    const messages = [
+      "正在繪製八字命盤...",
+      "分析五行能量分佈...",
+      "推算喜用神與互補元素...",
+      "正在凝聚專屬水晶能量..."
+    ];
+    let index = 0;
+    setLoadingMessage(messages[0]);
+    
+    const interval = setInterval(() => {
+      index = (index + 1) % messages.length;
+      setLoadingMessage(messages[index]);
+    }, 2500);
 
-const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'shop' | 'customize' | 'mine'>('shop');
-  const [shopView, setShopView] = useState<'list' | 'zodiac' | 'checkout'>('list');
-  const [checkoutOrigin, setCheckoutOrigin] = useState<'list' | 'zodiac'>('list');
-  const [selectedProduct, setSelectedProduct] = useState<ProductEntry & { name: string } | null>(null);
+    return () => clearInterval(interval);
+  }
+}, [loadingState]);
+*/
 
-  const [customAnalysisRecord, setCustomAnalysisRecord] = useState<CustomerRecord | null>(null);
-  const [shopTempRecord, setShopTempRecord] = useState<CustomerRecord | null>(null);
+// ✅ 替換成這段
+useEffect(() => {
+  if (loadingState === 'analyzing') {  // ✅ 只監聽 analyzing
+    const messages = [
+      "正在繪製八字命盤...",
+      "分析五行能量分佈...",
+      "推算喜用神與互補元素..."
+      // ❌ 移除："正在凝聚專屬水晶能量..."
+    ];
+    let index = 0;
+    setLoadingMessage(messages[0]);
+    
+    const interval = setInterval(() => {
+      index = (index + 1) % messages.length;
+      setLoadingMessage(messages[index]);
+    }, 2500);
 
-  const [customers, setCustomers] = useState<CustomerRecord[]>([]);
-  const [loadingState, setLoadingState] = useState<LoadingState>('idle');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [view, setView] = useState<'form' | 'result'>('form');
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPasswordInput, setAdminPasswordInput] = useState('');
-  const [googleScriptUrl, setGoogleScriptUrl] = useState(HARDCODED_SCRIPT_URL);
-  const [stars, setStars] = useState<any[]>([]);
-  const [loadingMessage, setLoadingMessage] = useState('');
+    return () => clearInterval(interval);
+  }
+}, [loadingState]);
 
-  useLayoutEffect(() => {
-    window.scrollTo(0, 0);
-  }, [activeTab, shopView, view]); 
 
-  useEffect(() => {
-    const newStars = Array.from({ length: 50 }).map(() => ({
-      top: `${Math.random() * 100}%`,
-      left: `${Math.random() * 100}%`,
-      size: `${Math.random() * 3 + 1}px`,
-      duration: `${Math.random() * 3 + 2}s`,
-      delay: `${Math.random() * 5}s`,
-      opacity: Math.random() * 0.7 + 0.3
-    }));
-    setStars(newStars);
-    dbService.getAllCustomers().then(setCustomers);
-  }, []);
+// -----------------------------------------
+// 修改 2: Loading Overlay (約在第 348 行)
+// -----------------------------------------
 
-  const handleFormSubmit = async (profileData: Omit<CustomerProfile, 'id' | 'createdAt'>) => {
-    setLoadingState('analyzing');
-    setErrorMessage(null);
-    const newProfile: CustomerProfile = { ...profileData, id: crypto.randomUUID(), createdAt: Date.now(), wishes: profileData.wishes || [] };
-    try {
-      const analysis = await analyzeCustomerProfile(newProfile);
-      setLoadingState('generating_image');
-      const imageUrl = await generateBraceletImage(analysis, newProfile);
-      const fullRecord: CustomerRecord = { ...newProfile, analysis, generatedImageUrl: imageUrl };
-      await dbService.addCustomer(fullRecord);
-      setCustomers(await dbService.getAllCustomers());
-      setCustomAnalysisRecord(fullRecord);
-      setLoadingState('completed');
-      setView('result');
-    } catch (error: any) {
-      setErrorMessage(error.message || "分析失敗");
-      setLoadingState('error');
-    }
-  };
+// ❌ 刪除這段
+/*
+{(loadingState === 'analyzing' || loadingState === 'generating_image') && (
+  <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-xl transition-all duration-500">
+*/
 
-  const handleProductSelect = (product: ProductEntry & { name: string }, origin: 'list' | 'zodiac') => {
-      setSelectedProduct(product);
-      setCheckoutOrigin(origin);
-      const tempRecord: CustomerRecord = {
-          id: crypto.randomUUID(), createdAt: Date.now(), name: product.name, gender: '其他' as any, birthDate: '', birthTime: '', wishes: [], isStandardProduct: true, generatedImageUrl: product.imageUrl,
-          analysis: { zodiacSign: '', element: product.element, bazi: { year: '', month: '', day: '', time: '' }, fiveElements: { gold: 0, wood: 0, water: 0, fire: 0, earth: 0 }, luckyElement: product.element, suggestedCrystals: [product.name], reasoning: product.description, visualDescription: '標準商品', colorPalette: [] }
-      };
-      setShopTempRecord(tempRecord);
-      setShopView('checkout');
-  };
-
-  const handleStandardOrderSubmit = async (details: ShippingDetails) => {
-      if (!shopTempRecord) return;
-      setIsSyncing(true);
-      const completedRecord = { ...shopTempRecord, shippingDetails: details };
-      await dbService.addCustomer(completedRecord); 
-      setCustomers(await dbService.getAllCustomers());
-      setShopTempRecord(completedRecord);
-      if (googleScriptUrl) await syncToGoogleSheet(completedRecord, googleScriptUrl);
-      setIsSyncing(false);
-  };
-
-  const handleCustomShippingSubmit = async (details: ShippingDetails) => {
-    if (!customAnalysisRecord) return;
-    setIsSyncing(true);
-    const updatedRecord = { ...customAnalysisRecord, shippingDetails: details };
-    await dbService.updateCustomer(updatedRecord);
-    setCustomers(await dbService.getAllCustomers());
-    setCustomAnalysisRecord(updatedRecord);
-    if (googleScriptUrl) await syncToGoogleSheet(updatedRecord, googleScriptUrl);
-    setIsSyncing(false);
-  };
-
-  return (
-    <div className="min-h-screen w-full bg-[#0f172a] text-slate-200 font-sans flex flex-col relative overflow-x-hidden">
-      <div className="noise-overlay"></div>
-      <div className="stars">
-        {stars.map((star, i) => (
-          <div key={i} className="star" style={{ top: star.top, left: star.left, width: star.size, height: star.size, '--duration': star.duration, '--delay': star.delay, '--opacity': star.opacity } as any} />
-        ))}
-      </div>
-
-      <header className="pt-8 pb-4 text-center z-10 px-4 w-full">
-        <h1 className="text-4xl md:text-5xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-mystic-200 via-white to-mystic-200 cursor-pointer" onClick={() => { setActiveTab('shop'); setShopView('list'); }}>
-          FWP Boutique
-        </h1>
-        <p className="text-mystic-300 tracking-[0.4em] text-[10px] md:text-xs uppercase mt-2">追求最純凈的美好</p>
-      </header>
-
-      <main className="container mx-auto px-4 relative z-10 flex-grow w-full max-w-7xl pb-24">
-        {(loadingState === 'analyzing' || loadingState === 'generating_image') && (
-          <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-xl">
-             <div className="w-16 h-16 border-t-2 border-mystic-400 rounded-full animate-spin mb-6"></div>
-             <h3 className="text-xl font-bold text-white animate-pulse">正在為您凝聚能量...</h3>
-          </div>
-        )}
-
-        {activeTab === 'shop' && (
-           <>
-              {shopView === 'list' && <Marketplace onProductSelect={(p) => handleProductSelect(p, 'list')} onOpenZodiac={() => setShopView('zodiac')} />}
-              {shopView === 'zodiac' && <ZodiacSelector onBack={() => setShopView('list')} onProductSelect={(p) => handleProductSelect(p, 'zodiac')} />}
-              {shopView === 'checkout' && shopTempRecord && selectedProduct && (
-                  <ProductCheckout 
-                     record={shopTempRecord} product={selectedProduct} onBack={() => setShopView(checkoutOrigin)} 
-                     onShippingSubmit={handleStandardOrderSubmit} isSyncing={isSyncing} onReset={() => { setShopView('list'); setShopTempRecord(null); }}
-                  />
-              )}
-           </>
-        )}
-
-        {activeTab === 'customize' && (
-          <div className="flex flex-col items-center gap-8">
-            {view === 'form' ? <CustomerForm onSubmit={handleFormSubmit} isProcessing={loadingState !== 'idle' && loadingState !== 'completed'} /> : (
-              customAnalysisRecord && <ResultCard record={customAnalysisRecord} onReset={() => setView('form')} onShippingSubmit={handleCustomShippingSubmit} isSyncing={isSyncing} />
-            )}
-          </div>
-        )}
-
-        {activeTab === 'mine' && isAdmin && (
-          <div className="animate-fade-in"><CRMList customers={customers} onSelect={() => {}} onDelete={async (id) => { await dbService.deleteCustomer(id); setCustomers(await dbService.getAllCustomers()); }} /></div>
-        )}
-        {activeTab === 'mine' && !isAdmin && (
-          <div className="max-w-xs mx-auto mt-20 bg-slate-800/50 p-8 rounded-2xl border border-slate-700 text-center">
-            <h3 className="text-xl font-bold text-white mb-6">管理員登入</h3>
-            <input type="password" value={adminPasswordInput} onChange={e => setAdminPasswordInput(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white mb-6 text-center" placeholder="密碼" />
-            <button onClick={() => adminPasswordInput === '8888' && setIsAdmin(true)} className="w-full py-3 bg-mystic-700 rounded-xl text-white font-bold">登入</button>
-          </div>
-        )}
-      </main>
-
-      <BottomNav activeTab={activeTab} onChange={tab => { setActiveTab(tab); if (tab === 'shop') setShopView('list'); }} />
+// ✅ 替換成這段
+{loadingState === 'analyzing' && (
+  <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-xl transition-all duration-500">
+     <div className="relative w-24 h-24 mb-8">
+      <div className="absolute inset-0 border-2 border-mystic-900/50 rounded-full scale-110"></div>
+      <div className="absolute inset-0 border-t-2 border-mystic-400 rounded-full animate-spin"></div>
+      <div className="absolute inset-2 border-2 border-slate-800 rounded-full"></div>
     </div>
-  );
-};
+    <h3 className="text-2xl md:text-3xl font-sans font-bold text-white animate-pulse tracking-wide text-center px-4">
+      {loadingMessage || '正在啟動能量分析...'}
+    </h3>
+    <p className="text-mystic-400/70 mt-4 text-sm font-normal tracking-wider font-sans opacity-80">
+        凝聚天地能量，探尋命理奧秘
+    </p>
+  </div>
+)}
 
-export default App;
+
+// -----------------------------------------
+// 修改 3: handleFormSubmit (你已經改好了！)
+// -----------------------------------------
+
+// ✅ 你的版本已經是對的：
+const handleFormSubmit = async (profileData: Omit<CustomerProfile, 'id' | 'createdAt'>) => {
+  setLoadingState('analyzing');
+  setErrorMessage(null);
+
+  const newProfile: CustomerProfile = {
+    ...profileData,
+    id: crypto.randomUUID(),
+    createdAt: Date.now(),
+    wishes: profileData.wishes || []
+  };
+
+  try {
+    // 步驟 1: 分析八字
+    const analysis = await analyzeCustomerProfile(newProfile);
+    
+    // ❌ 已移除：setLoadingState('generating_image');
+    // ❌ 已移除：const imageUrl = await generateBraceletImage(analysis, newProfile);
+
+    // 步驟 2: 建立完整記錄（圖片欄位直接設為空字串）
+    const fullRecord: CustomerRecord = {
+      ...newProfile,
+      analysis,
+      generatedImageUrl: "", // ✅ 不再生成圖片
+    };
+
+    // 步驟 3: 儲存到資料庫
+    await dbService.addCustomer(fullRecord);
+    const updatedRecords = await dbService.getAllCustomers();
+    setCustomers(updatedRecords);
+    
+    // 步驟 4: 顯示結果
+    setCustomAnalysisRecord(fullRecord);
+    setLoadingState('completed');
+    setView('result');
+
+  } catch (error: any) {
+    console.error(error);
+    setErrorMessage(error.message || "發生未知錯誤");
+    setLoadingState('error');
+  }
+};
