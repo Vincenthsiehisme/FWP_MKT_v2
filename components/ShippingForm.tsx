@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { ShippingDetails, PricingStrategy, CartItem } from '../types';
@@ -10,13 +9,20 @@ interface ShippingFormProps {
   isSubmitting?: boolean;
   pricingStrategy: PricingStrategy;
   initialItem: { productId: string; name: string; price: number; isCustom?: boolean; imageUrl?: string };
+  allowAdditionalPurchase?: boolean; // ✅ 新增：是否允許加購其他商品（預設 true）
 }
 
 const toHalfWidth = (str: string) => {
   return str.replace(/[\uff01-\uff5e]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0)).replace(/\u3000/g, ' ');
 };
 
-const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit, isSubmitting = false, pricingStrategy, initialItem }) => {
+const ShippingForm: React.FC<ShippingFormProps> = ({ 
+  onSubmit, 
+  isSubmitting = false, 
+  pricingStrategy, 
+  initialItem,
+  allowAdditionalPurchase = true // ✅ 預設值為 true（向下相容）
+}) => {
   // 擴展購物車狀態，支援多品項
   const [cart, setCart] = useState<CartItem[]>([{
     productId: initialItem.productId,
@@ -252,62 +258,64 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit, isSubmitting = fa
         </div>
       </div>
 
-      {/* 2. 能量補給站 - 橫向雙向加購區 (優化) */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-end px-2">
-          <div>
-            <h4 className="text-lg font-bold text-white flex items-center gap-2">🌌 能量補給站</h4>
-            <p className="text-[10px] text-slate-400 font-sans tracking-widest uppercase mt-1">Enhance Your Aura</p>
+      {/* ✅ 2. 能量補給站 - 根據 allowAdditionalPurchase 條件渲染 */}
+      {allowAdditionalPurchase && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-end px-2">
+            <div>
+              <h4 className="text-lg font-bold text-white flex items-center gap-2">🌌 能量補給站</h4>
+              <p className="text-[10px] text-slate-400 font-sans tracking-widest uppercase mt-1">Enhance Your Aura</p>
+            </div>
+          </div>
+          <div className="flex overflow-x-auto gap-4 pb-4 px-2 no-scrollbar scroll-smooth">
+            {allProducts.map((prod) => {
+              const isSelected = cart.some(i => i.productName === prod.name);
+              const isInitialItem = prod.name === initialItem.name;
+              
+              return (
+                <div 
+                  key={prod.name} 
+                  className={`flex-shrink-0 w-40 rounded-3xl border transition-all duration-500 p-4 flex flex-col gap-3 group relative
+                    ${isSelected ? 'bg-mystic-900/20 border-mystic-500/50 shadow-[0_0_20px_rgba(217,70,239,0.15)] scale-[1.02]' : 'bg-slate-900/60 border-white/5 hover:border-gold-500/30'}
+                  `}
+                >
+                  {/* 勾選標記 */}
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 z-20 w-5 h-5 bg-mystic-500 rounded-full flex items-center justify-center shadow-lg animate-scale-in">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                  )}
+
+                  <div className={`w-full aspect-square rounded-2xl bg-slate-950 overflow-hidden border border-white/5 relative transition-transform duration-500 ${isSelected ? 'scale-90' : 'group-hover:scale-95'}`}>
+                     <img src={prod.imageUrl} className={`w-full h-full object-contain transition-all duration-700 ${isSelected ? 'brightness-110 saturate-125' : 'opacity-80 group-hover:opacity-100'}`} />
+                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent"></div>
+                  </div>
+                  
+                  <div className="px-1">
+                    <h5 className={`text-xs font-bold truncate transition-colors ${isSelected ? 'text-mystic-300' : 'text-white'}`}>{prod.name}</h5>
+                    <p className="text-[10px] text-gold-400/80 font-mono mt-1">${prod.price.toLocaleString()}</p>
+                  </div>
+
+                  <button 
+                     type="button" 
+                     disabled={isInitialItem}
+                     onClick={() => toggleCartItem(prod)}
+                     className={`w-full py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest flex items-center justify-center gap-1
+                      ${isInitialItem 
+                        ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
+                        : isSelected 
+                          ? 'bg-red-950/40 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white' 
+                          : 'bg-slate-800 text-slate-400 hover:bg-gold-600 hover:text-white border border-white/5'}
+                     `}
+                  >
+                     {isInitialItem ? '本命商品' : isSelected ? '✕ 移除' : '+ 加入'}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
-        <div className="flex overflow-x-auto gap-4 pb-4 px-2 no-scrollbar scroll-smooth">
-          {allProducts.map((prod) => {
-            const isSelected = cart.some(i => i.productName === prod.name);
-            const isInitialItem = prod.name === initialItem.name;
-            
-            return (
-              <div 
-                key={prod.name} 
-                className={`flex-shrink-0 w-40 rounded-3xl border transition-all duration-500 p-4 flex flex-col gap-3 group relative
-                  ${isSelected ? 'bg-mystic-900/20 border-mystic-500/50 shadow-[0_0_20px_rgba(217,70,239,0.15)] scale-[1.02]' : 'bg-slate-900/60 border-white/5 hover:border-gold-500/30'}
-                `}
-              >
-                {/* 勾選標記 */}
-                {isSelected && (
-                  <div className="absolute top-2 right-2 z-20 w-5 h-5 bg-mystic-500 rounded-full flex items-center justify-center shadow-lg animate-scale-in">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                )}
-
-                <div className={`w-full aspect-square rounded-2xl bg-slate-950 overflow-hidden border border-white/5 relative transition-transform duration-500 ${isSelected ? 'scale-90' : 'group-hover:scale-95'}`}>
-                   <img src={prod.imageUrl} className={`w-full h-full object-contain transition-all duration-700 ${isSelected ? 'brightness-110 saturate-125' : 'opacity-80 group-hover:opacity-100'}`} />
-                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent"></div>
-                </div>
-                
-                <div className="px-1">
-                  <h5 className={`text-xs font-bold truncate transition-colors ${isSelected ? 'text-mystic-300' : 'text-white'}`}>{prod.name}</h5>
-                  <p className="text-[10px] text-gold-400/80 font-mono mt-1">${prod.price.toLocaleString()}</p>
-                </div>
-
-                <button 
-                   type="button" 
-                   disabled={isInitialItem}
-                   onClick={() => toggleCartItem(prod)}
-                   className={`w-full py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest flex items-center justify-center gap-1
-                    ${isInitialItem 
-                      ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
-                      : isSelected 
-                        ? 'bg-red-950/40 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white' 
-                        : 'bg-slate-800 text-slate-400 hover:bg-gold-600 hover:text-white border border-white/5'}
-                   `}
-                >
-                   {isInitialItem ? '本命商品' : isSelected ? '✕ 移除' : '+ 加入'}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      )}
 
       {/* 3. 費用統計 */}
       <div className="bg-slate-900/60 rounded-3xl p-8 border border-white/10 shadow-xl relative overflow-hidden">
