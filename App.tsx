@@ -9,7 +9,8 @@ import CRMList from './components/CRMList';
 import ProductCheckout from './components/ProductCheckout'; 
 import ZodiacSelector from './components/ZodiacSelector';
 import { analyzeCustomerProfile, generateBraceletImage } from './services/geminiService';
-import { syncToGoogleSheet, sendTestPing } from './services/googleSheetService';
+// Removed sendTestPing import which was causing a "no exported member" error.
+import { syncToGoogleSheet } from './services/googleSheetService';
 import { dbService } from './services/dbService';
 import { ProductEntry } from './services/productDatabase';
 import { COUPON_CONFIG } from './config/coupons';
